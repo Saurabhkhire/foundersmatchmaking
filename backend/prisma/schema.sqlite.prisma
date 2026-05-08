@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("SQLITE_URL")
+}
+
+enum UserRole {
+  founder
+  investor
+  admin
+}
+
+enum MatchType {
+  founder_founder
+  founder_investor
+  investor_investor
+}
+
+model User {
+  id              String           @id @default(cuid())
+  companyName     String
+  email           String           @unique
+  username        String           @unique
+  passwordHash    String
+  role            UserRole
+  createdAt       DateTime         @default(now())
+  founderProfile  FounderProfile?
+  investorProfile InvestorProfile?
+  matchesA        Match[]          @relation("MatchA")
+  matchesB        Match[]          @relation("MatchB")
+}
+
+model FounderProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  startupOneLiner   String
+  icp               String
+  gtm               String
+  biggestBottleneck String
+  lookingFor        String
+  canHelp           String
+  stage             String
+  revenue           String
+  teamSize          Int
+  usersCount        Int
+  pitch             String   @default("")
+  embedding         Json?
+  extractedData     Json?
+  status            String   @default("active")
+  currentlyMatched  String?
+  lastMatchedAt     DateTime?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model InvestorProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  preferredSector     String
+  preferredStage      String
+  tractionExpectation String
+  investmentInterest  String
+  redFlags            String
+  usersPreference     String
+  pitch               String   @default("")
+  embedding           Json?
+  extractedData       Json?
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Match {
+  id          String    @id @default(cuid())
+  userAId     String
+  userBId     String
+  matchType   MatchType
+  score       Int
+  aiReason    String
+  aiQuestions Json
+  createdAt   DateTime  @default(now())
+  userA       User      @relation("MatchA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB       User      @relation("MatchB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId, matchType])
+}
