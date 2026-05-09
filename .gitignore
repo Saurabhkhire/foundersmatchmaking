@@ -9,6 +9,8 @@ node_modules/
 /build
 
 # local env files
+.env
+.env.*
 .env*.local
 
 # logs
