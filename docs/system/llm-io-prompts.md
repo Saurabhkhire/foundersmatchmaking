@@ -25,3 +25,22 @@ All LLM logic runs in backend: `backend/src/lib/openai.js`.
 - Prompt: strict JSON with `whyMatched[]` and `questions[]`
 - Output: explanation bullets + suggested questions
 - Fallback: deterministic defaults
+
+## Pitch generation
+- Function: `generateThreeMinutePitch(role, profile)`
+- Founder prompt context includes:
+  - startup one-liner
+  - industry type
+  - ICP
+  - GTM
+  - bottleneck
+  - looking for
+  - can help with
+  - stage
+  - revenue
+  - money raised
+  - team size
+  - users count
+- Investor prompt context includes thesis and preference fields.
+- Output: plain-text ~3 minute pitch, editable by user.
+- Fallback: deterministic paragraph using provided profile values.

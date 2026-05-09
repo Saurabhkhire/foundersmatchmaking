@@ -5,17 +5,10 @@ import { mapLimit } from "./concurrency.js";
 import {
   scoreFounderFounderProfiles,
   scoreFounderInvestorProfiles,
+  DEFAULT_MATCH_QUESTIONS,
   MIN_SCORE,
 } from "./matching.js";
-import {
-  copyFounderFounderWhy,
-  copyFounderFounderQuestions,
-  copyFounderInvestorWhy,
-  copyFounderInvestorQuestions,
-  copyInvestorFounderWhy,
-  copyInvestorFounderQuestions,
-  mergeAiReasonPlain,
-} from "./matchCopy.js";
+import { buildMatchExplanation } from "./openai.js";
 
 const SMTP_SEND_CONCURRENCY = Math.max(1, Number(process.env.SMTP_SEND_CONCURRENCY || "6"));
 
@@ -76,6 +69,81 @@ function renderLinkedInLine(linkedinUrl) {
   const url = String(linkedinUrl || "").trim();
   if (!url) return "";
   return `<br/><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">LinkedIn</a>`;
+}
+
+function compactFounderProfile(p) {
+  if (!p) return {};
+  return {
+    startupOneLiner: p.startupOneLiner,
+    industryType: p.industryType,
+    icp: p.icp,
+    gtm: p.gtm,
+    biggestBottleneck: p.biggestBottleneck,
+    lookingFor: p.lookingFor,
+    canHelp: p.canHelp,
+    stage: p.stage,
+    revenue: p.revenue,
+    moneyRaised: p.moneyRaised,
+    teamSize: p.teamSize,
+    usersCount: p.usersCount,
+    linkedinUrl: p.linkedinUrl,
+  };
+}
+
+function compactInvestorProfile(p) {
+  if (!p) return {};
+  return {
+    preferredSector: p.preferredSector,
+    preferredStage: p.preferredStage,
+    tractionExpectation: p.tractionExpectation,
+    investmentInterest: p.investmentInterest,
+    redFlags: p.redFlags,
+    usersPreference: p.usersPreference,
+    linkedinUrl: p.linkedinUrl,
+  };
+}
+
+async function buildLlMWhyQuestions({
+  cache,
+  key,
+  roleA,
+  roleB,
+  partyAName,
+  partyBName,
+  matchType,
+  score,
+  highlights,
+  contextA,
+  contextB,
+  storedReason,
+  storedQuestions,
+}) {
+  const existingQuestions = Array.isArray(storedQuestions) && storedQuestions.length
+    ? storedQuestions.map(String).slice(0, 3)
+    : null;
+  if (storedReason && existingQuestions) {
+    return { why: storedReason, questions: existingQuestions };
+  }
+
+  if (cache.has(key)) return cache.get(key);
+
+  const built = await buildMatchExplanation({
+    roleA,
+    roleB,
+    score,
+    highlights,
+    matchType,
+    partyAName,
+    partyBName,
+    contextA,
+    contextB,
+  });
+  const result = {
+    why: (built.whyMatched?.length ? built.whyMatched : highlights).join(" | "),
+    questions: built.questions?.length ? built.questions.slice(0, 3) : DEFAULT_MATCH_QUESTIONS,
+  };
+  cache.set(key, result);
+  return result;
 }
 
 function buildFounderEmailHtml(userName, roomPartner, founderRows, investorRows) {
@@ -180,7 +248,7 @@ ${table}
 </div>`;
 }
 
-async function buildHtmlForUser(u, allFounders, allInvestors) {
+async function buildHtmlForUser(u, allFounders, allInvestors, llmCache) {
   const rawMatches = await prisma.match.findMany({
     where: { OR: [{ userAId: u.id }, { userBId: u.id }] },
   });
@@ -195,18 +263,29 @@ async function buildHtmlForUser(u, allFounders, allInvestors) {
       const score = scoreFounderFounderProfiles(myFp, v.founderProfile);
       const m = byOther.get(v.id);
       const isRoom = m?.matchType === MatchType.founder_founder;
-      const whyConnect = mergeAiReasonPlain(
-        copyFounderFounderWhy(myFp, v.founderProfile, v.companyName, score),
-        m?.matchType === MatchType.founder_founder ? m.aiReason : "",
-      );
-      const questions = copyFounderFounderQuestions(myFp, v.founderProfile, v.companyName);
+      const ffKey = `ff:${u.id}:${v.id}`;
+      const llmOut = await buildLlMWhyQuestions({
+        cache: llmCache,
+        key: ffKey,
+        roleA: UserRole.founder,
+        roleB: UserRole.founder,
+        partyAName: u.companyName,
+        partyBName: v.companyName,
+        matchType: MatchType.founder_founder,
+        score,
+        highlights: ["Reciprocal need/help fit", "Industry/ICP/GTM alignment", "Stage/revenue/raised compatibility"],
+        contextA: compactFounderProfile(myFp),
+        contextB: compactFounderProfile(v.founderProfile),
+        storedReason: m?.matchType === MatchType.founder_founder ? m.aiReason : "",
+        storedQuestions: m?.matchType === MatchType.founder_founder ? m.aiQuestions : null,
+      });
       founderRows.push({
         companyName: v.companyName,
         username: v.username,
         linkedinUrl: v.founderProfile?.linkedinUrl || "",
         score,
-        whyConnect,
-        questions,
+        whyConnect: llmOut.why,
+        questions: llmOut.questions,
         isRoom: !!isRoom,
       });
     }
@@ -232,18 +311,31 @@ async function buildHtmlForUser(u, allFounders, allInvestors) {
       const score = scoreFounderInvestorProfiles(myFp, inv.investorProfile);
       const m = byOther.get(inv.id);
       const meets = score >= MIN_SCORE;
-      const whyFit = mergeAiReasonPlain(
-        copyFounderInvestorWhy(myFp, inv.investorProfile, inv.companyName, score, meets),
-        m?.matchType === MatchType.founder_investor ? m.aiReason : "",
-      );
-      const questions = copyFounderInvestorQuestions(myFp, inv.investorProfile, inv.companyName);
+      const fiKey = `fi:${u.id}:${inv.id}`;
+      const llmOut = await buildLlMWhyQuestions({
+        cache: llmCache,
+        key: fiKey,
+        roleA: UserRole.founder,
+        roleB: UserRole.investor,
+        partyAName: u.companyName,
+        partyBName: inv.companyName,
+        matchType: MatchType.founder_investor,
+        score,
+        highlights: meets
+          ? ["Needs/thesis fit", "Sector and stage alignment", "Traction/raised expectation fit"]
+          : ["Below intro threshold", "Partial thesis or stage fit"],
+        contextA: compactFounderProfile(myFp),
+        contextB: compactInvestorProfile(inv.investorProfile),
+        storedReason: m?.matchType === MatchType.founder_investor ? m.aiReason : "",
+        storedQuestions: m?.matchType === MatchType.founder_investor ? m.aiQuestions : null,
+      });
       investorRows.push({
         companyName: inv.companyName,
         username: inv.username,
         linkedinUrl: inv.investorProfile?.linkedinUrl || "",
         score,
-        whyFit,
-        questions,
+        whyFit: llmOut.why,
+        questions: llmOut.questions,
       });
     }
     investorRows.sort((a, b) => b.score - a.score);
@@ -263,18 +355,31 @@ async function buildHtmlForUser(u, allFounders, allInvestors) {
       const score = scoreFounderInvestorProfiles(f.founderProfile, invProf);
       const m = byOther.get(f.id);
       const meets = score >= MIN_SCORE;
-      const whyInvest = mergeAiReasonPlain(
-        copyInvestorFounderWhy(invProf, f.founderProfile, f.companyName, score, meets),
-        m?.matchType === MatchType.founder_investor ? m.aiReason : "",
-      );
-      const questions = copyInvestorFounderQuestions(invProf, f.founderProfile, f.companyName);
+      const fiKey = `fi:${f.id}:${u.id}`;
+      const llmOut = await buildLlMWhyQuestions({
+        cache: llmCache,
+        key: fiKey,
+        roleA: UserRole.founder,
+        roleB: UserRole.investor,
+        partyAName: f.companyName,
+        partyBName: u.companyName,
+        matchType: MatchType.founder_investor,
+        score,
+        highlights: meets
+          ? ["Needs/thesis fit", "Sector and stage alignment", "Traction/raised expectation fit"]
+          : ["Below intro threshold", "Partial thesis or stage fit"],
+        contextA: compactFounderProfile(f.founderProfile),
+        contextB: compactInvestorProfile(invProf),
+        storedReason: m?.matchType === MatchType.founder_investor ? m.aiReason : "",
+        storedQuestions: m?.matchType === MatchType.founder_investor ? m.aiQuestions : null,
+      });
       founderRows.push({
         companyName: f.companyName,
         username: f.username,
         linkedinUrl: f.founderProfile?.linkedinUrl || "",
         score,
-        whyInvest,
-        questions,
+        whyInvest: llmOut.why,
+        questions: llmOut.questions,
       });
     }
     founderRows.sort((a, b) => b.score - a.score);
@@ -347,9 +452,10 @@ export async function sendMatchEmailsToAllUsers() {
       select: { id: true, companyName: true, username: true, investorProfile: true },
     }),
   ]);
+  const llmCache = new Map();
 
   async function sendOne(u) {
-    const built = await buildHtmlForUser(u, allFounders, allInvestors);
+    const built = await buildHtmlForUser(u, allFounders, allInvestors, llmCache);
     if (!built) {
       console.warn(`[email] skip user ${u.id} — unsupported role or missing profile`);
       return "skipped";

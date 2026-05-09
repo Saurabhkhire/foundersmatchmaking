@@ -44,9 +44,54 @@ export async function buildMatchExplanation(input) {
       ],
     };
   }
-  const prompt = "Return strict JSON only with keys whyMatched:string[] and questions:string[] (exactly 3). roleA=" + input.roleA + "; roleB=" + input.roleB + "; score=" + input.score + "; highlights=" + input.highlights.join("; ");
+  const contextA = JSON.stringify(input.contextA || {});
+  const contextB = JSON.stringify(input.contextB || {});
+  const prompt =
+    "Return strict JSON only with keys whyMatched:string[] and questions:string[] (exactly 3). " +
+    "Questions must be concrete and tailored to the two profiles; avoid generic networking prompts. " +
+    "whyMatched must explain specific overlaps, complementary needs/help, and key tensions.\n" +
+    "roleA=" + input.roleA +
+    "; roleB=" + input.roleB +
+    "; score=" + input.score +
+    "; matchType=" + (input.matchType || "") +
+    "; partyAName=" + (input.partyAName || "party A") +
+    "; partyBName=" + (input.partyBName || "party B") +
+    "; highlights=" + input.highlights.join("; ") +
+    "\nA_PROFILE=" + contextA +
+    "\nB_PROFILE=" + contextB;
   const response = await client.responses.create({ model: "gpt-4.1-mini", input: prompt });
   try { return JSON.parse(response.output_text || "{}"); } catch { return { whyMatched: input.highlights, questions: [] }; }
+}
+
+export async function buildMatchScore(input) {
+  const client = getClient();
+  if (!client) return { score: Number(input.baseScore || 0) };
+
+  const contextA = JSON.stringify(input.contextA || {});
+  const contextB = JSON.stringify(input.contextB || {});
+  const prompt =
+    "Return strict JSON only with keys score:number and rationale:string[]. " +
+    "Score must be integer 0..100. Use both profiles and compare needs, offerings, stage, traction and thesis fit. " +
+    "Do not be generic.\n" +
+    "matchType=" + (input.matchType || "") +
+    "; roleA=" + input.roleA +
+    "; roleB=" + input.roleB +
+    "; partyAName=" + (input.partyAName || "party A") +
+    "; partyBName=" + (input.partyBName || "party B") +
+    "; baseScore=" + Number(input.baseScore || 0) +
+    "; hints=" + (Array.isArray(input.hints) ? input.hints.join("; ") : "") +
+    "\nA_PROFILE=" + contextA +
+    "\nB_PROFILE=" + contextB;
+
+  const response = await client.responses.create({ model: "gpt-4.1-mini", input: prompt });
+  try {
+    const parsed = JSON.parse(response.output_text || "{}");
+    const n = Number(parsed.score);
+    if (!Number.isFinite(n)) return { score: Number(input.baseScore || 0) };
+    return { score: Math.max(0, Math.min(100, Math.round(n))), rationale: parsed.rationale || [] };
+  } catch {
+    return { score: Number(input.baseScore || 0) };
+  }
 }
 
 function founderPitchContext(p) {

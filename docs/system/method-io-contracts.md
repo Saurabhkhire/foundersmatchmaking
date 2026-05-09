@@ -17,6 +17,12 @@
 - `loadProfile()` -> GET `/api/profile`
 - `loadMatches()` -> GET `/api/matches`
 - `saveProfile()` -> PUT `/api/profile`
+- Founder form uses dropdown fields:
+  - `industryType`
+  - `stage`
+  - `revenue`
+  - `moneyRaised`
+- Founder and investor form include `linkedinUrl`
 
 ### `frontend/app/admin/page.tsx`
 - `loadUsers()` -> GET `/api/admin/users`
@@ -30,6 +36,7 @@
 - `GET /auth/me` -> `{user}`
 - `GET /profile` -> `{user}`
 - `PUT /profile` -> `{ok:true}`
+- `POST /profile/generate-pitch` -> `{pitch}`
 - `GET /matches` -> best and all matches
 - `GET /admin/users` -> list users
 - `DELETE /admin/users/:id` -> `{ok:true}`
@@ -46,10 +53,18 @@
 - bearer parsing and role enforcement middleware
 
 ### `backend/src/lib/matching.js`
-- hybrid scoring and match regeneration
+- founder-founder scoring (prioritizes lookingFor/canHelp; includes industryType/moneyRaised)
+- founder-investor scoring (includes industry/stage/revenue/raised alignment)
+- mandatory founder room pairing for even founder counts
+- match regeneration and persistence
+
+### `backend/src/lib/matchCopy.js`
+- personalized why-connect / why-invest copy generation
+- personalized question generation from form values
 
 ### `backend/src/lib/openai.js`
 - LLM extraction/embedding/reasoning methods
 
 ### `backend/src/lib/email.js`
 - send role-aware SMTP match summary emails to all non-admin users
+- include LinkedIn URLs in email rows

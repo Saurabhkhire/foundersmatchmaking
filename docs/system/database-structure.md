@@ -18,14 +18,18 @@ Select provider in backend:
 - Relations: founderProfile?, investorProfile?, matchesA, matchesB
 
 ### FounderProfile
-- startupOneLiner, icp, gtm, biggestBottleneck, lookingFor, canHelp
-- stage, revenue, teamSize, usersCount
+- linkedinUrl
+- startupOneLiner, industryType, icp, gtm, biggestBottleneck, lookingFor, canHelp
+- stage, revenue, moneyRaised, teamSize, usersCount
+- pitch
 - embedding, extractedData
 - status, currentlyMatched, lastMatchedAt
 
 ### InvestorProfile
+- linkedinUrl
 - preferredSector, preferredStage, tractionExpectation
 - investmentInterest, redFlags, usersPreference
+- pitch
 - embedding, extractedData
 
 ### Match

@@ -20,6 +20,13 @@
 ### PUT /api/profile
 - Positive: founder updates founder fields -> `200 {ok:true}`
 - Positive: investor updates investor fields -> `200 {ok:true}`
+- Positive: founder saves `industryType`, `stage`, `revenue`, `moneyRaised` dropdown values
+- Positive: founder/investor saves `linkedinUrl`
+- Negative: missing/invalid token -> `401`
+
+### POST /api/profile/generate-pitch
+- Positive: founder payload -> `200 {pitch}`
+- Positive: investor payload -> `200 {pitch}`
 - Negative: missing/invalid token -> `401`
 
 ### GET /api/matches
@@ -43,6 +50,8 @@
 
 ### POST /api/admin/run-matching
 - Positive: admin trigger -> `200 {ok:true, email:{sent,failed,skipped}}`
+- Positive: with even number of founders, each founder has exactly one founder-founder room partner row
+- Positive: founder/investor emails include personalized rationale/questions and LinkedIn links (if present)
 - Negative: no token -> `401`
 - Negative: non-admin -> `403`
 
@@ -65,6 +74,8 @@
 - Positive: first-time user can fill empty profile and save
 - Positive: returning user can edit existing profile and save
 - Positive: matches render sorted with score and reasoning
+- Positive: founder sees dropdowns for industry/stage/revenue/moneyRaised
+- Positive: founder and investor can save LinkedIn URL
 - Negative: missing/invalid token -> redirect to `/login`
 
 ### Admin Page
@@ -77,13 +88,13 @@
 ## Email Content Validation
 
 ### Founder email should contain
-- 1v1 founder match section
-- score
-- AI reasoning/answers
-- suggested questions
-- all founder and investor match tables
+- 1v1 founder room partner section (when pair assigned)
+- score + personalized why-connect
+- 3 tailored peer questions
+- all founder and investor tables with score, rationale, questions
+- LinkedIn URLs when available
 
 ### Investor email should contain
-- no founder 1v1 section
-- all founder and investor match tables
-- scores and AI reasoning/answers
+- no founder room-partner section
+- all founders table with score, why-invest, diligence questions
+- LinkedIn URLs when available

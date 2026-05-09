@@ -12,6 +12,15 @@
 - First login/register: profile fields are empty, user fills role-specific fields.
 - Returning user: same screen allows editing previously saved values.
 - Save action calls `PUT /api/profile`.
+- Founder role fields include:
+  - LinkedIn URL
+  - startup one-liner
+  - industry type (dropdown)
+  - ICP, GTM, bottleneck, looking for, can help
+  - stage (dropdown), revenue (dropdown), money raised (dropdown)
+  - team size, users count
+  - editable pitch
+- Investor role fields include LinkedIn URL plus sector/stage/traction/thesis fields.
 
 ## Founder/Investor Dashboard
 - Frontend loads:
@@ -30,18 +39,19 @@
 ## Admin Matching + Email Workflow
 1. Admin clicks Run Matching.
 2. Frontend calls `POST /api/admin/run-matching`.
-3. Backend recomputes all matches.
+3. Backend recomputes all matches:
+   - founder-founder mandatory room pairing (disjoint pairs)
+   - founder-investor and investor-investor scoring
 4. Backend sends SMTP emails to all non-admin users.
 5. Response includes email delivery stats.
 
 ## Email Format Rules
 ### Founder recipient
-- Include "1 v 1 founder match" section (if available)
-- Include score
-- Include AI reasoning (answers to questions)
-- Include suggested questions
-- Include all founder matches and all investor matches tables with scores and answers
+- Include "1 v 1 founder room partner" section
+- Include score, personalized why-connect rationale, and 3 tailored questions
+- Include all founder matches table (score, why connect, questions, LinkedIn)
+- Include all investor matches table (score, why this investor, questions, LinkedIn)
 
 ### Investor recipient
-- Do NOT include founder 1v1 section
-- Include all founder matches and all investor matches tables with scores and answers
+- Include all founders table with score, why invest, diligence questions, and LinkedIn
+- No founder room-partner section
