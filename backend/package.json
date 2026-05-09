@@ -8,9 +8,9 @@
     "start": "node src/server.js",
     "db:use:neon": "node scripts/select-db.mjs neon",
     "db:use:sqlite": "node scripts/select-db.mjs sqlite",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "node ./node_modules/prisma/build/index.js generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:push": "prisma db push",
+    "prisma:push": "node ./node_modules/prisma/build/index.js db push",
     "seed:admin": "node scripts/seed-admin.mjs",
     "seed:demo": "node scripts/seed-demo.mjs"
   },
