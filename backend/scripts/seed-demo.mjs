@@ -115,6 +115,8 @@ function founderProfileFromLane(lane, variant, indexGlobal) {
   const icp = inv.preferredSector;
   const stage = inv.preferredStage;
   const revenue = inv.tractionExpectation;
+  const industryType = inv.preferredSector.split(" ")[0] || "Other";
+  const moneyRaised = indexGlobal % 2 === 0 ? "500k to 1m" : "1m to 5m";
   // GTM must be a substring of the one-liner for the startupOneLiner vs gtm overlap term.
   const gtm = inv.investmentInterest.slice(0, Math.min(inv.investmentInterest.length, 72));
   const startupOneLiner = `${tag} — ${focus}; we sell ${inv.investmentInterest} aligned with ${inv.preferredSector.slice(0, 48)}.`;
@@ -130,7 +132,9 @@ function founderProfileFromLane(lane, variant, indexGlobal) {
     `Asking for partners who fit: ${lookingFor}. Happy to help peers with: ${canHelp}.`,
   ].join(" ");
   return {
+    linkedinUrl: `https://www.linkedin.com/in/demo-founder-${tag.toLowerCase()}`,
     startupOneLiner,
+    industryType,
     icp,
     gtm,
     biggestBottleneck,
@@ -138,6 +142,7 @@ function founderProfileFromLane(lane, variant, indexGlobal) {
     canHelp,
     stage,
     revenue,
+    moneyRaised,
     teamSize,
     usersCount,
     pitch,
@@ -203,6 +208,7 @@ async function main() {
         role: "investor",
         investorProfile: {
           create: {
+            linkedinUrl: `https://www.linkedin.com/in/demo-investor-${n}`,
             preferredSector: inv.preferredSector,
             preferredStage: inv.preferredStage,
             tractionExpectation: inv.tractionExpectation,

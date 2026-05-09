@@ -28,12 +28,14 @@ function overlapScore(a, b, max) {
 export function scoreFounderFounderProfiles(a, b) {
   const score = overlapScore(a.lookingFor, b.canHelp, 38)
     + overlapScore(b.lookingFor, a.canHelp, 38)
+    + overlapScore(a.industryType, b.industryType, 12)
+    + overlapScore(a.moneyRaised, b.moneyRaised, 10)
     + overlapScore(a.icp, b.icp, 10)
     + overlapScore(a.gtm, b.gtm, 8)
     + overlapScore(a.biggestBottleneck, b.canHelp, 6)
     + overlapScore(b.biggestBottleneck, a.canHelp, 6)
-    + overlapScore(a.stage, b.stage, 4)
-    + overlapScore(a.revenue, b.revenue, 4)
+    + overlapScore(a.stage, b.stage, 8)
+    + overlapScore(a.revenue, b.revenue, 8)
     + (Math.abs(a.teamSize - b.teamSize) <= 3 ? 2 : 0)
     + (Math.abs(a.usersCount - b.usersCount) <= 500 ? 2 : 0);
   return Math.min(score, 100);
@@ -50,9 +52,11 @@ function founderInvestorScore(founder, investor) {
     + overlapScore(founder.canHelp, investor.usersPreference, 20);
 
   const secondary =
-    overlapScore(founder.icp, investor.preferredSector, 14)
+    overlapScore(founder.industryType, investor.preferredSector, 18)
+    + overlapScore(founder.icp, investor.preferredSector, 14)
     + overlapScore(founder.stage, investor.preferredStage, 10)
     + overlapScore(founder.revenue, investor.tractionExpectation, 10)
+    + overlapScore(founder.moneyRaised, investor.tractionExpectation, 10)
     + overlapScore(founder.startupOneLiner, investor.investmentInterest, 8)
     + overlapScore(founder.biggestBottleneck, investor.investmentInterest, 6)
     + overlapScore(founder.startupOneLiner, founder.gtm, 4)
@@ -82,7 +86,7 @@ async function refreshEmbeddings() {
   ]);
 
   async function refreshFounder(founder) {
-    const content = [founder.startupOneLiner, founder.icp, founder.gtm, founder.biggestBottleneck, founder.lookingFor, founder.canHelp].join(" | ");
+    const content = [founder.startupOneLiner, founder.industryType, founder.icp, founder.gtm, founder.biggestBottleneck, founder.lookingFor, founder.canHelp, founder.stage, founder.revenue, founder.moneyRaised].join(" | ");
     const [embedding, extractedData] = await Promise.all([
       embeddingFromText(content),
       extractFounderMetadata(content),

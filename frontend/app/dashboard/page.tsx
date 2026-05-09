@@ -23,6 +23,77 @@ type MatchPayload = {
   investorMatches: Match[];
 };
 
+const INDUSTRY_OPTIONS = [
+  "EdTech",
+  "FinTech",
+  "HealthTech",
+  "AI",
+  "SaaS",
+  "Marketplace",
+  "E-commerce",
+  "ClimateTech",
+  "Cybersecurity",
+  "Consumer",
+  "Gaming",
+  "Other",
+];
+
+const STAGE_OPTIONS = [
+  "Idea",
+  "Pre-seed",
+  "Seed",
+  "Pre-series A",
+  "Series A",
+  "Series B",
+  "Series C",
+  "Series D",
+  "Bootstrapped",
+];
+
+const MONEY_BANDS = [
+  "Not raised",
+  "1k to 10k",
+  "10k to 50k",
+  "50k to 100k",
+  "100k to 500k",
+  "500k to 1m",
+  "1m to 5m",
+  "5m to 10m",
+  "10m to 50m",
+  "50m to 100m",
+  "100m+",
+];
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-slate-200">{label}</label>
+      <select
+        className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-3 text-base text-slate-100"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">Select {label.toLowerCase()}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 /** Normalize API profile to string-only form state (fixes number coercion while typing). */
 function normalizeProfileRow(raw: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
@@ -178,11 +249,24 @@ export default function DashboardPage() {
         {role === "founder" ? (
           <div className="space-y-5">
             <AutoGrowTextarea
+              label="LinkedIn URL"
+              value={profile.linkedinUrl ?? ""}
+              onChange={(v) => updateProfileField("linkedinUrl", v)}
+              placeholder="https://www.linkedin.com/in/your-profile"
+              minRows={2}
+            />
+            <AutoGrowTextarea
               label="Startup one-liner"
               value={profile.startupOneLiner ?? ""}
               onChange={(v) => updateProfileField("startupOneLiner", v)}
               placeholder="What do you build?"
               minRows={3}
+            />
+            <SelectField
+              label="Industry type"
+              value={profile.industryType ?? ""}
+              onChange={(v) => updateProfileField("industryType", v)}
+              options={INDUSTRY_OPTIONS}
             />
             <AutoGrowTextarea
               label="ICP"
@@ -219,19 +303,23 @@ export default function DashboardPage() {
               placeholder="What can you offer others?"
               minRows={3}
             />
-            <AutoGrowTextarea
+            <SelectField
               label="Stage"
               value={profile.stage ?? ""}
               onChange={(v) => updateProfileField("stage", v)}
-              placeholder="e.g. pre-seed"
-              minRows={2}
+              options={STAGE_OPTIONS}
             />
-            <AutoGrowTextarea
+            <SelectField
               label="Revenue"
               value={profile.revenue ?? ""}
               onChange={(v) => updateProfileField("revenue", v)}
-              placeholder="e.g. 0-5k MRR"
-              minRows={2}
+              options={MONEY_BANDS}
+            />
+            <SelectField
+              label="Money raised"
+              value={profile.moneyRaised ?? ""}
+              onChange={(v) => updateProfileField("moneyRaised", v)}
+              options={MONEY_BANDS}
             />
             <AutoGrowTextarea
               label="Team size"
@@ -250,6 +338,13 @@ export default function DashboardPage() {
           </div>
         ) : role === "investor" ? (
           <div className="space-y-5">
+            <AutoGrowTextarea
+              label="LinkedIn URL"
+              value={profile.linkedinUrl ?? ""}
+              onChange={(v) => updateProfileField("linkedinUrl", v)}
+              placeholder="https://www.linkedin.com/in/your-profile"
+              minRows={2}
+            />
             <AutoGrowTextarea
               label="Preferred sector"
               value={profile.preferredSector ?? ""}

@@ -72,12 +72,18 @@ function htmlToPlainText(html) {
     .trim();
 }
 
+function renderLinkedInLine(linkedinUrl) {
+  const url = String(linkedinUrl || "").trim();
+  if (!url) return "";
+  return `<br/><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">LinkedIn</a>`;
+}
+
 function buildFounderEmailHtml(userName, roomPartner, founderRows, investorRows) {
   const roomHtml = roomPartner
     ? `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:16px 0;">
 <h2 style="margin:0 0 8px;">Your 1v1 room partner (this round)</h2>
 <p style="margin:0 0 8px;color:#334155;">Room assignment is mandatory for every founder when the cohort has an even headcount: each person gets exactly one dedicated peer partner for this round (pairs chosen by highest compatibility score among disjoint matches).</p>
-<p style="margin:0;"><strong>${escapeHtml(roomPartner.companyName)}</strong> (${escapeHtml(roomPartner.username)}) — <strong>${roomPartner.score}/100</strong></p>
+<p style="margin:0;"><strong>${escapeHtml(roomPartner.companyName)}</strong> (${escapeHtml(roomPartner.username)})${renderLinkedInLine(roomPartner.linkedinUrl)} — <strong>${roomPartner.score}/100</strong></p>
 <p style="margin:8px 0 0;"><em>Why connect:</em> ${escapeHtml(roomPartner.whyConnect)}</p>
 <p style="margin:8px 0 0;"><strong>Suggested questions for each other</strong></p>
 ${renderQuestionList(Array.isArray(roomPartner.questions) ? roomPartner.questions : [])}
@@ -99,7 +105,7 @@ ${renderQuestionList(Array.isArray(roomPartner.questions) ? roomPartner.question
 ${founderRows
   .map(
     (r) => `<tr>
-<td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;"><strong>${escapeHtml(r.companyName)}</strong><br/><span style="color:#64748b;">${escapeHtml(r.username)}</span>${r.isRoom ? '<br/><span style="font-size:12px;color:#0369a1;">Room partner</span>' : ""}</td>
+<td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;"><strong>${escapeHtml(r.companyName)}</strong><br/><span style="color:#64748b;">${escapeHtml(r.username)}</span>${renderLinkedInLine(r.linkedinUrl)}${r.isRoom ? '<br/><span style="font-size:12px;color:#0369a1;">Room partner</span>' : ""}</td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;text-align:center;"><strong>${r.score}</strong></td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;">${escapeHtml(r.whyConnect)}</td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;">${renderQuestionsHtml(r.questions)}</td>
@@ -119,7 +125,7 @@ ${founderRows
 ${investorRows
   .map(
     (r) => `<tr>
-<td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;"><strong>${escapeHtml(r.companyName)}</strong><br/><span style="color:#64748b;">${escapeHtml(r.username)}</span></td>
+<td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;"><strong>${escapeHtml(r.companyName)}</strong><br/><span style="color:#64748b;">${escapeHtml(r.username)}</span>${renderLinkedInLine(r.linkedinUrl)}</td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;text-align:center;"><strong>${r.score}</strong></td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;">${escapeHtml(r.whyFit)}</td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;">${renderQuestionsHtml(r.questions)}</td>
@@ -156,7 +162,7 @@ function buildInvestorEmailHtml(userName, founderRows) {
 ${founderRows
   .map(
     (r) => `<tr>
-<td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;"><strong>${escapeHtml(r.companyName)}</strong><br/><span style="color:#64748b;">${escapeHtml(r.username)}</span></td>
+<td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;"><strong>${escapeHtml(r.companyName)}</strong><br/><span style="color:#64748b;">${escapeHtml(r.username)}</span>${renderLinkedInLine(r.linkedinUrl)}</td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;text-align:center;"><strong>${r.score}</strong></td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;">${escapeHtml(r.whyInvest)}</td>
 <td style="padding:10px;border:1px solid #e2e8f0;vertical-align:top;">${renderQuestionsHtml(r.questions)}</td>
@@ -197,6 +203,7 @@ async function buildHtmlForUser(u, allFounders, allInvestors) {
       founderRows.push({
         companyName: v.companyName,
         username: v.username,
+        linkedinUrl: v.founderProfile?.linkedinUrl || "",
         score,
         whyConnect,
         questions,
@@ -213,6 +220,7 @@ async function buildHtmlForUser(u, allFounders, allInvestors) {
       ? {
           companyName: rp.companyName,
           username: rp.username,
+        linkedinUrl: rp.linkedinUrl,
           score: rp.score,
           whyConnect: rp.whyConnect,
           questions: rp.questions,
@@ -232,6 +240,7 @@ async function buildHtmlForUser(u, allFounders, allInvestors) {
       investorRows.push({
         companyName: inv.companyName,
         username: inv.username,
+        linkedinUrl: inv.investorProfile?.linkedinUrl || "",
         score,
         whyFit,
         questions,
@@ -262,6 +271,7 @@ async function buildHtmlForUser(u, allFounders, allInvestors) {
       founderRows.push({
         companyName: f.companyName,
         username: f.username,
+        linkedinUrl: f.founderProfile?.linkedinUrl || "",
         score,
         whyInvest,
         questions,

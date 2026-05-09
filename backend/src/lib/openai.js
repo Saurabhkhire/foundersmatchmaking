@@ -53,6 +53,7 @@ function founderPitchContext(p) {
   const x = p || {};
   return [
     `Startup one-liner: ${x.startupOneLiner ?? ""}`,
+    `Industry type: ${x.industryType ?? ""}`,
     `ICP (ideal customer): ${x.icp ?? ""}`,
     `GTM (go-to-market): ${x.gtm ?? ""}`,
     `Biggest bottleneck: ${x.biggestBottleneck ?? ""}`,
@@ -60,6 +61,7 @@ function founderPitchContext(p) {
     `Can help with: ${x.canHelp ?? ""}`,
     `Stage: ${x.stage ?? ""}`,
     `Revenue: ${x.revenue ?? ""}`,
+    `Money raised: ${x.moneyRaised ?? ""}`,
     `Team size: ${x.teamSize ?? ""}`,
     `Users count: ${x.usersCount ?? ""}`,
   ].join("\n");
@@ -88,7 +90,7 @@ export async function generateThreeMinutePitch(role, profile) {
   if (!client) {
     const p = profile || {};
     if (role === "founder" || role === "admin") {
-      return `Hi — here is my three-minute pitch based on what I shared in my profile.\n\n${structured}\n\n---\n\nI am building ${p.startupOneLiner || "our product"} for ${p.icp || "a clear customer segment"}. We reach them through ${p.gtm || "our go-to-market motion"}. Today our biggest constraint is ${p.biggestBottleneck || "scaling what works"}. I am actively looking for ${p.lookingFor || "the right partners and tactical help"}, and I can contribute ${p.canHelp || "hands-on help back to the community"}. We are at stage ${p.stage || "early"}, with revenue around ${p.revenue || "early/pre-revenue"}, team size ${String(p.teamSize ?? "")}, and roughly ${String(p.usersCount ?? "")} users.\n\nIf there is alignment, I would love a focused conversation on next steps this week.`;
+      return `Hi — here is my three-minute pitch based on what I shared in my profile.\n\n${structured}\n\n---\n\nI am building ${p.startupOneLiner || "our product"} in ${p.industryType || "our target industry"} for ${p.icp || "a clear customer segment"}. We reach them through ${p.gtm || "our go-to-market motion"}. Today our biggest constraint is ${p.biggestBottleneck || "scaling what works"}. I am actively looking for ${p.lookingFor || "the right partners and tactical help"}, and I can contribute ${p.canHelp || "hands-on help back to the community"}. We are at stage ${p.stage || "early"}, with revenue around ${p.revenue || "early/pre-revenue"}, money raised ${p.moneyRaised || "not raised yet"}, team size ${String(p.teamSize ?? "")}, and roughly ${String(p.usersCount ?? "")} users.\n\nIf there is alignment, I would love a focused conversation on next steps this week.`;
     }
     return `Hi — here is my three-minute investor introduction based on my profile inputs.\n\n${structured}\n\n---\n\nI focus on ${p.preferredSector || "sectors I care about"}, typically at ${p.preferredStage || "stages I understand well"}. I look for ${p.tractionExpectation || "traction signals that matter"} and I am especially excited by ${p.investmentInterest || "these themes"}. I avoid ${p.redFlags || "patterns that do not fit"}, and I prefer founders who ${p.usersPreference || "match how I like to work"}.\n\nIf there is fit, I would love to explore diligence and introductions with clarity and speed.`;
   }
@@ -97,7 +99,7 @@ export async function generateThreeMinutePitch(role, profile) {
     "Write a natural spoken 3-minute pitch (around 350-450 words), plain text only, no markdown. " +
     `Speaker role: ${role}. ` +
     "You MUST weave in the user's exact inputs below by name (quote or paraphrase faithfully—do not invent facts beyond these fields). " +
-    "Structure: hook, problem, who it serves, approach/GTM, traction signals (stage/revenue/team/users for founders), bottleneck, what they want, what they offer (founders) OR thesis, sectors, stages, expectations, red flags, preferences (investors). End with a clear ask.\n\n" +
+    "Structure: hook, problem, who it serves, approach/GTM, traction signals (industry/stage/revenue/money raised/team/users for founders), bottleneck, what they want, what they offer (founders) OR thesis, sectors, stages, expectations, red flags, preferences (investors). End with a clear ask.\n\n" +
     "USER INPUTS (use all that are non-empty):\n" +
     structured +
     "\n\nRAW JSON (same data, for reference only):\n" +

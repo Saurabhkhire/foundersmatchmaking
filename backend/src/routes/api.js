@@ -38,8 +38,8 @@ apiRouter.post("/auth/register", async (req, res) => {
       username: parsed.data.username,
       passwordHash: await hashPassword(parsed.data.password),
       role: parsed.data.role,
-      founderProfile: parsed.data.role === "founder" ? { create: { startupOneLiner: "", icp: "", gtm: "", biggestBottleneck: "", lookingFor: "", canHelp: "", stage: "idea", revenue: "pre-revenue", teamSize: 1, usersCount: 0 } } : undefined,
-      investorProfile: parsed.data.role === "investor" ? { create: { preferredSector: "", preferredStage: "", tractionExpectation: "", investmentInterest: "", redFlags: "", usersPreference: "" } } : undefined,
+      founderProfile: parsed.data.role === "founder" ? { create: { linkedinUrl: "", startupOneLiner: "", industryType: "", icp: "", gtm: "", biggestBottleneck: "", lookingFor: "", canHelp: "", stage: "idea", revenue: "pre-revenue", moneyRaised: "not raised", teamSize: 1, usersCount: 0 } } : undefined,
+      investorProfile: parsed.data.role === "investor" ? { create: { linkedinUrl: "", preferredSector: "", preferredStage: "", tractionExpectation: "", investmentInterest: "", redFlags: "", usersPreference: "" } } : undefined,
     },
   });
 
@@ -73,9 +73,9 @@ apiRouter.get("/profile", requireAuth, async (req, res) => {
 apiRouter.put("/profile", requireAuth, async (req, res) => {
   const body = req.body || {};
   if (req.session.role === "founder") {
-    await prisma.founderProfile.update({ where: { userId: req.session.userId }, data: { startupOneLiner: body.startupOneLiner ?? "", icp: body.icp ?? "", gtm: body.gtm ?? "", biggestBottleneck: body.biggestBottleneck ?? "", lookingFor: body.lookingFor ?? "", canHelp: body.canHelp ?? "", stage: body.stage ?? "", revenue: body.revenue ?? "", teamSize: Number(body.teamSize || 0), usersCount: Number(body.usersCount || 0), pitch: body.pitch ?? "" } });
+    await prisma.founderProfile.update({ where: { userId: req.session.userId }, data: { linkedinUrl: body.linkedinUrl ?? "", startupOneLiner: body.startupOneLiner ?? "", industryType: body.industryType ?? "", icp: body.icp ?? "", gtm: body.gtm ?? "", biggestBottleneck: body.biggestBottleneck ?? "", lookingFor: body.lookingFor ?? "", canHelp: body.canHelp ?? "", stage: body.stage ?? "", revenue: body.revenue ?? "", moneyRaised: body.moneyRaised ?? "", teamSize: Number(body.teamSize || 0), usersCount: Number(body.usersCount || 0), pitch: body.pitch ?? "" } });
   } else if (req.session.role === "investor") {
-    await prisma.investorProfile.update({ where: { userId: req.session.userId }, data: { preferredSector: body.preferredSector ?? "", preferredStage: body.preferredStage ?? "", tractionExpectation: body.tractionExpectation ?? "", investmentInterest: body.investmentInterest ?? "", redFlags: body.redFlags ?? "", usersPreference: body.usersPreference ?? "", pitch: body.pitch ?? "" } });
+    await prisma.investorProfile.update({ where: { userId: req.session.userId }, data: { linkedinUrl: body.linkedinUrl ?? "", preferredSector: body.preferredSector ?? "", preferredStage: body.preferredStage ?? "", tractionExpectation: body.tractionExpectation ?? "", investmentInterest: body.investmentInterest ?? "", redFlags: body.redFlags ?? "", usersPreference: body.usersPreference ?? "", pitch: body.pitch ?? "" } });
   }
   res.json({ ok: true });
 });

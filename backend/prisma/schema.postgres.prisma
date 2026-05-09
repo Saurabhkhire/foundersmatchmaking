@@ -38,7 +38,9 @@ model User {
 model FounderProfile {
   id                String   @id @default(cuid())
   userId            String   @unique
+  linkedinUrl       String   @default("")
   startupOneLiner   String
+  industryType      String
   icp               String
   gtm               String
   biggestBottleneck String
@@ -46,6 +48,7 @@ model FounderProfile {
   canHelp           String
   stage             String
   revenue           String
+  moneyRaised       String
   teamSize          Int
   usersCount        Int
   pitch             String   @default("")
@@ -60,6 +63,7 @@ model FounderProfile {
 model InvestorProfile {
   id                  String   @id @default(cuid())
   userId              String   @unique
+  linkedinUrl         String   @default("")
   preferredSector     String
   preferredStage      String
   tractionExpectation String
